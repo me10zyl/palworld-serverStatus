@@ -15,6 +15,7 @@ Useful Palworld Dedicated Server Manager
 ```
 java.exe -Djava.awt.headless=false -jar serverStatus-0.0.1-SNAPSHOT.jar
 ```
+then go to the browser open localhost:8222 to view the manage interface.
 
 ## Support platforms
 Windows only
