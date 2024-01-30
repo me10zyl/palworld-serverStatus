@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>你不干，有的是帕鲁干</title>
+    <style>
+        .started{
+            color: #058d5d;
+        }
+        .not-started{
+            color: brown;
+        }
+    </style>
+</head>
+<body>
+<div style="text-align: center">
+
+</div>
+<div>
+    <div id="builders"></div>
+    服务器状态：
+    <span id="serverStatus2"></span>
+    <span id="serverStatus"></span>
+    <button onclick="refreshStatus()">
+        刷新服务器当前状态
+    </button>
+</div>
+<div id="playerDiv" style="display: none">
+    <div>服务器人数：<span id="playerCount"></span></div>
+    <pre id="players"></pre>
+</div>
+<div style="margin: 20px auto 0 auto;">
+    <button onclick="restart()">
+        <b>！！！重启服务器！！！</b>
+    </button>
+</div>
+<hr />
+<div>
+    服务器通知公告：<input id="noticeText" /> <button onclick="sendNotice()">发送</button>
+</div>
+<script>
+    async function sendNotice(){
+        let text = document.getElementById('noticeText').value
+        if(!text){
+            alert('通知公告不能为空!');
+        }else{
+            let searchParams = new URLSearchParams();
+            searchParams.append('text', text)
+            fetch('/sendNotice', {
+                method: 'post',
+                body: searchParams
+            }).then(async (res)=>{
+                if(res.ok) {
+                    document.getElementById('noticeText').value = ''
+                    alert('发送成功，' + await res.text());
+                }else{
+                    alert('发送失败');
+                }
+            }).catch(()=>{
+                alert('发送失败');
+            })
+        }
+    }
+    async function  restart(){
+        let b = confirm('确认重启?');
+        if(b) {
+            await fetch('/restart', {
+                method: 'post'
+            });
+            alert('已发送重启请求')
+            refreshStatus()
+        }
+    }
+    async function refreshStatus(){
+        let result = fetch('/serverStatus', {
+            method: 'get'
+        })
+        let promise = await (await result).json();
+        console.log(promise)
+        document.getElementById('serverStatus').textContent = promise.statusText;
+        document.getElementById('serverStatus2').textContent = promise.statusText2;
+        document.getElementById('builders').textContent = JSON.stringify(promise.builders);
+        if(promise.status !== 'STARTED'){
+            document.getElementById('playerDiv').style.display = 'none';
+            document.getElementById('serverStatus2').classList.toggle('not-started', true)
+            document.getElementById('serverStatus2').classList.toggle('started', false)
+        }else{
+            document.getElementById('playerDiv').style.display = 'block';
+            document.getElementById('serverStatus2').classList.toggle('started', true)
+            document.getElementById('serverStatus2').classList.toggle('not-started', false)
+        }
+        let promise2 = await (await fetch('/userList', {
+            method: 'get'
+        })).json()
+
+        document.getElementById('players').textContent = promise2.format;
+        document.getElementById('playerCount').textContent = promise2.playerCount + "/" + promise2.maxPlayerCount;
+    }
+    window.onload = async function(){
+        refreshStatus()
+    }
+</script>
+</body>
+</html>
